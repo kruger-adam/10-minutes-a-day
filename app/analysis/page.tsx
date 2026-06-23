@@ -45,9 +45,20 @@ function AnalysisContent() {
       })
 
       if (!response.ok) throw new Error('Analysis failed')
-      const { analysis: text } = await response.json()
-      setAnalysis(text)
-      upsertSession({ ...s, analysis: text })
+      if (!response.body) throw new Error('No stream')
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullText = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        fullText += decoder.decode(value, { stream: true })
+        setAnalysis(fullText)
+      }
+
+      upsertSession({ ...s, analysis: fullText })
       setDone(true)
     } catch {
       setError('Something went wrong. Please try again.')
@@ -87,10 +98,13 @@ function AnalysisContent() {
           <p className="text-xs uppercase tracking-widest text-amber-500 mb-6">Your reflection</p>
 
           {analysis ? (
-            <div
-              className="text-stone-200 leading-relaxed text-base space-y-4 whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{ __html: formattedAnalysis }}
-            />
+            <div className="text-stone-200 leading-relaxed text-base space-y-4">
+              <div
+                className="whitespace-pre-wrap"
+                dangerouslySetInnerHTML={{ __html: formattedAnalysis }}
+              />
+              {!done && <span className="inline-block w-0.5 h-4 bg-amber-500 animate-pulse" />}
+            </div>
           ) : (
             <div className="flex items-center gap-3 text-stone-500">
               <div className="w-4 h-4 border-2 border-stone-700 border-t-amber-500 rounded-full animate-spin" />

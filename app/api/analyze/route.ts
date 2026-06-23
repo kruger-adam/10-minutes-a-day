@@ -26,18 +26,41 @@ export async function POST(request: Request) {
     return Response.json({ error: 'No entry provided' }, { status: 400 })
   }
 
-  const message = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: `Here is my journal entry:\n\n${entry}`,
-      },
-    ],
+  const stream = new ReadableStream({
+    async start(controller) {
+      const encoder = new TextEncoder()
+      try {
+        const response = anthropic.messages.stream({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          system: SYSTEM_PROMPT,
+          messages: [
+            {
+              role: 'user',
+              content: `Here is my journal entry:\n\n${entry}`,
+            },
+          ],
+        })
+
+        for await (const chunk of response) {
+          if (
+            chunk.type === 'content_block_delta' &&
+            chunk.delta.type === 'text_delta'
+          ) {
+            controller.enqueue(encoder.encode(chunk.delta.text))
+          }
+        }
+      } finally {
+        controller.close()
+      }
+    },
   })
 
-  const text = message.content[0].type === 'text' ? message.content[0].text : ''
-  return Response.json({ analysis: text })
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'X-Accel-Buffering': 'no',
+    },
+  })
 }
