@@ -33,10 +33,10 @@ function AnalysisContent() {
 
     if (hasStarted.current) return
     hasStarted.current = true
-    streamAnalysis(s)
+    fetchAnalysis(s)
   }, [id])
 
-  async function streamAnalysis(s: JournalSession) {
+  async function fetchAnalysis(s: JournalSession) {
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -45,40 +45,9 @@ function AnalysisContent() {
       })
 
       if (!response.ok) throw new Error('Analysis failed')
-      if (!response.body) throw new Error('No response body')
-
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let fullText = ''
-      let buffer = ''
-
-      while (true) {
-        const { done: readerDone, value } = await reader.read()
-        if (readerDone) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const data = line.slice(6).trim()
-          if (!data) continue
-
-          try {
-            const event = JSON.parse(data)
-            if (
-              event.type === 'content_block_delta' &&
-              event.delta?.type === 'text_delta'
-            ) {
-              fullText += event.delta.text
-              setAnalysis(fullText)
-            }
-          } catch {}
-        }
-      }
-
-      upsertSession({ ...s, analysis: fullText })
+      const { analysis: text } = await response.json()
+      setAnalysis(text)
+      upsertSession({ ...s, analysis: text })
       setDone(true)
     } catch {
       setError('Something went wrong. Please try again.')
@@ -95,7 +64,7 @@ function AnalysisContent() {
 
   const formattedAnalysis = analysis
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^→ /gm, '<span class="text-amber-400">→</span> ')
+    .replace(/^→/gm, '<span class="text-amber-400">→</span>')
     .split('\n')
     .map(line => line || '<br/>')
     .join('\n')
@@ -127,10 +96,6 @@ function AnalysisContent() {
               <div className="w-4 h-4 border-2 border-stone-700 border-t-amber-500 rounded-full animate-spin" />
               <span>Reading your entry...</span>
             </div>
-          )}
-
-          {!done && analysis && (
-            <span className="inline-block w-0.5 h-4 bg-amber-500 ml-1 animate-pulse" />
           )}
 
           {error && <p className="text-red-400 text-sm mt-4">{error}</p>}

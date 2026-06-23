@@ -18,13 +18,12 @@ export default function SessionPage() {
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const listeningRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const startTimeRef = useRef(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const mainRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const draft = sessionStorage.getItem('session_draft')
     if (draft) setEntry(draft)
-
     const hasSpeech = !!(window.SpeechRecognition || (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition)
     setSpeechSupported(hasSpeech)
   }, [])
@@ -33,12 +32,16 @@ export default function SessionPage() {
     if (entry) sessionStorage.setItem('session_draft', entry)
   }, [entry])
 
-  // Auto-scroll textarea to bottom when speech adds text
+  // Auto-grow textarea and scroll container to bottom whenever entry changes
   useEffect(() => {
-    if (listening && textareaRef.current) {
-      textareaRef.current.scrollTop = textareaRef.current.scrollHeight
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
     }
-  }, [entry, listening])
+    if (mainRef.current) {
+      mainRef.current.scrollTop = mainRef.current.scrollHeight
+    }
+  }, [entry])
 
   useEffect(() => {
     return () => {
@@ -53,7 +56,6 @@ export default function SessionPage() {
   const startTimer = useCallback(() => {
     if (started) return
     setStarted(true)
-    startTimeRef.current = Date.now()
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -63,7 +65,6 @@ export default function SessionPage() {
         return prev - 1
       })
     }, 1000)
-    textareaRef.current?.focus()
   }, [started])
 
   const formatTime = (seconds: number) => {
@@ -121,7 +122,6 @@ export default function SessionPage() {
     listeningRef.current = true
     recognition.start()
     setListening(true)
-
     if (!started) startTimer()
   }
 
@@ -154,17 +154,15 @@ export default function SessionPage() {
 
   const timeFraction = timeLeft / DURATION
   const timerColor =
-    timeFraction > 0.5
-      ? 'text-stone-100'
-      : timeFraction > 0.2
-        ? 'text-amber-400'
-        : 'text-red-400'
+    timeFraction > 0.5 ? 'text-stone-100'
+    : timeFraction > 0.2 ? 'text-amber-400'
+    : 'text-red-400'
 
   const timedOut = timeLeft === 0
 
   return (
-    <div className="min-h-screen bg-stone-950 flex flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-stone-800 bg-stone-950">
+    <div className="h-dvh flex flex-col bg-stone-950">
+      <header className="flex-none flex items-center justify-between px-6 py-4 border-b border-stone-800">
         <button
           onClick={() => router.push('/')}
           className="text-stone-500 hover:text-stone-300 text-sm transition-colors"
@@ -179,18 +177,16 @@ export default function SessionPage() {
         <div className="w-12" />
       </header>
 
-      <main className="flex-1 flex flex-col px-6 pt-6 pb-2 max-w-2xl mx-auto w-full">
+      <main ref={mainRef} className="flex-1 overflow-y-auto px-6 pt-5 pb-2">
         {!started && (
           <p className="mb-5 text-stone-500 text-sm">
-            {speechSupported
-              ? 'Tap the mic to speak, or just start typing. The timer begins when you do.'
-              : 'Start typing — the timer begins when you do.'}
+            Use your keyboard mic or tap "Use mic" below. The timer begins when you start.
           </p>
         )}
 
         {timedOut && (
           <p className="mb-5 text-amber-400 text-sm">
-            Ten minutes done. Add a final thought if you'd like, then submit whenever you're ready.
+            Ten minutes done. Add a final thought if you'd like, then submit.
           </p>
         )}
 
@@ -205,11 +201,12 @@ export default function SessionPage() {
             if (!started) startTimer()
           }}
           placeholder="Let your thoughts flow..."
-          className="flex-1 w-full bg-transparent text-stone-100 text-lg leading-relaxed placeholder:text-stone-700 resize-none outline-none min-h-[300px]"
+          rows={1}
+          className="w-full bg-transparent text-stone-100 text-lg leading-relaxed placeholder:text-stone-700 resize-none overflow-hidden outline-none"
         />
       </main>
 
-      <footer className="px-6 py-4 border-t border-stone-800 flex items-center justify-between gap-4 max-w-2xl mx-auto w-full">
+      <footer className="flex-none px-6 py-4 border-t border-stone-800 flex items-center justify-between gap-4">
         {speechSupported ? (
           <button
             onClick={toggleSpeech}
