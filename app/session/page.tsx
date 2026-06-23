@@ -33,7 +33,7 @@ export default function SessionPage() {
     if (entry) sessionStorage.setItem('session_draft', entry)
   }, [entry])
 
-  // Auto-grow textarea and scroll container to bottom whenever entry changes
+  // Auto-grow textarea and scroll container to bottom whenever entry or interim text changes
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
@@ -42,7 +42,7 @@ export default function SessionPage() {
     if (mainRef.current) {
       mainRef.current.scrollTop = mainRef.current.scrollHeight
     }
-  }, [entry])
+  }, [entry, interimText])
 
   useEffect(() => {
     return () => {
