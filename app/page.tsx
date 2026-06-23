@@ -24,19 +24,21 @@ export default function Home() {
           </p>
         </div>
 
-        <Link
-          href="/session"
-          className="inline-block bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-10 py-4 rounded-full text-lg transition-colors"
-        >
-          Start today's session
-        </Link>
+        <div className="flex flex-col items-center gap-4">
+          <Link
+            href="/session"
+            className="inline-block bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-10 py-4 rounded-full text-lg transition-colors"
+          >
+            Start today's session
+          </Link>
 
-        <Link
-          href="/history"
-          className="text-stone-500 hover:text-stone-400 text-sm transition-colors"
-        >
-          View past sessions
-        </Link>
+          <Link
+            href="/history"
+            className="text-stone-500 hover:text-stone-400 text-sm transition-colors"
+          >
+            View past sessions
+          </Link>
+        </div>
       </div>
     </main>
   )
