@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSessions } from '@/lib/storage'
 import type { JournalSession } from '@/lib/types'
 
 export default function HistoryPage() {
   const router = useRouter()
   const [sessions, setSessions] = useState<JournalSession[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setSessions(getSessions())
+    fetch('/api/sessions')
+      .then(r => r.json())
+      .then(data => { setSessions(data); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   const formatDate = (iso: string) =>
@@ -46,7 +49,11 @@ export default function HistoryPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-8">
-        {sessions.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-4 h-4 border-2 border-stone-700 border-t-amber-500 rounded-full animate-spin" />
+          </div>
+        ) : sessions.length === 0 ? (
           <div className="text-center py-20 space-y-3">
             <p className="text-stone-500">No sessions yet.</p>
             <button

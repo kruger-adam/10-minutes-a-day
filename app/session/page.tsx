@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { upsertSession } from '@/lib/storage'
 
 const DURATION = 5 * 60
 
@@ -150,13 +149,18 @@ export default function SessionPage() {
 
     const id = Date.now().toString()
     const elapsed = started ? DURATION - timeLeft : 0
-
-    upsertSession({
+    const session = {
       id,
       createdAt: new Date().toISOString(),
       entry: entry.trim(),
       analysis: '',
       duration: elapsed,
+    }
+
+    await fetch('/api/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(session),
     })
 
     sessionStorage.removeItem('session_draft')

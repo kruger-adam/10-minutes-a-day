@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Show, SignInButton, UserButton } from '@clerk/nextjs'
 
 export default function Home() {
   return (
@@ -25,19 +26,28 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col items-center gap-4">
-          <Link
-            href="/session"
-            className="inline-block bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-10 py-4 rounded-full text-lg transition-colors"
-          >
-            Start today's session
-          </Link>
+          <Show when="signed-in">
+            <Link
+              href="/session"
+              className="inline-block bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-10 py-4 rounded-full text-lg transition-colors"
+            >
+              Start today's session
+            </Link>
+            <div className="flex items-center gap-6">
+              <Link href="/history" className="text-stone-500 hover:text-stone-400 text-sm transition-colors">
+                View past sessions
+              </Link>
+              <UserButton />
+            </div>
+          </Show>
 
-          <Link
-            href="/history"
-            className="text-stone-500 hover:text-stone-400 text-sm transition-colors"
-          >
-            View past sessions
-          </Link>
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="inline-block bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-10 py-4 rounded-full text-lg transition-colors">
+                Sign in to get started
+              </button>
+            </SignInButton>
+          </Show>
         </div>
       </div>
     </main>

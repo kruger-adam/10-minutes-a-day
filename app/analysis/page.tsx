@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { getSession, upsertSession } from '@/lib/storage'
 import type { JournalSession } from '@/lib/types'
 
 function AnalysisContent() {
@@ -19,24 +18,31 @@ function AnalysisContent() {
 
   useEffect(() => {
     if (!id) { router.replace('/'); return }
-
-    const s = getSession(id)
-    if (!s) { router.replace('/'); return }
-
-    setSession(s)
-
-    if (s.analysis) {
-      setAnalysis(s.analysis)
-      setDone(true)
-      return
-    }
-
-    if (hasStarted.current) return
-    hasStarted.current = true
-    fetchAnalysis(s)
+    loadSession(id)
   }, [id])
 
-  async function fetchAnalysis(s: JournalSession) {
+  async function loadSession(sessionId: string) {
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`)
+      if (!res.ok) { router.replace('/'); return }
+      const s: JournalSession = await res.json()
+      setSession(s)
+
+      if (s.analysis) {
+        setAnalysis(s.analysis)
+        setDone(true)
+        return
+      }
+
+      if (hasStarted.current) return
+      hasStarted.current = true
+      streamAnalysis(s)
+    } catch {
+      router.replace('/')
+    }
+  }
+
+  async function streamAnalysis(s: JournalSession) {
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -52,20 +58,30 @@ function AnalysisContent() {
       let fullText = ''
 
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const { done: readerDone, value } = await reader.read()
+        if (readerDone) break
         fullText += decoder.decode(value, { stream: true })
         setAnalysis(fullText)
       }
 
-      upsertSession({ ...s, analysis: fullText })
+      await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...s, analysis: fullText }),
+      })
       setDone(true)
     } catch {
       setError('Something went wrong. Please try again.')
     }
   }
 
-  if (!session) return null
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-stone-950 flex items-center justify-center">
+        <div className="w-4 h-4 border-2 border-stone-700 border-t-amber-500 rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   const formattedDate = new Date(session.createdAt).toLocaleDateString('en-US', {
     weekday: 'long',
