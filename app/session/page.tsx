@@ -11,6 +11,7 @@ export default function SessionPage() {
   const [timeLeft, setTimeLeft] = useState(DURATION)
   const [started, setStarted] = useState(false)
   const [entry, setEntry] = useState('')
+  const [interimText, setInterimText] = useState('')
   const [listening, setListening] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(true)
@@ -79,6 +80,7 @@ export default function SessionPage() {
       recognitionRef.current?.stop()
       recognitionRef.current = null
       setListening(false)
+      setInterimText('')
       return
     }
 
@@ -90,17 +92,26 @@ export default function SessionPage() {
 
     const recognition = new SpeechRecognitionAPI()
     recognition.continuous = true
-    recognition.interimResults = false
+    recognition.interimResults = true
     recognition.lang = 'en-US'
 
     recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .slice(event.resultIndex)
-        .map(r => r[0].transcript)
-        .join(' ')
-        .trim()
-      if (transcript) {
-        setEntry(prev => prev + (prev ? ' ' : '') + transcript)
+      let interim = ''
+      let final = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i]
+        if (result.isFinal) {
+          final += result[0].transcript
+        } else {
+          interim += result[0].transcript
+        }
+      }
+      if (final.trim()) {
+        setEntry(prev => prev + (prev ? ' ' : '') + final.trim())
+        setInterimText('')
+      }
+      if (interim) {
+        setInterimText(interim)
       }
     }
 
@@ -192,8 +203,9 @@ export default function SessionPage() {
 
         <textarea
           ref={textareaRef}
-          value={entry}
+          value={entry + (interimText ? (entry ? ' ' : '') + interimText : '')}
           onChange={(e) => {
+            setInterimText('')
             setEntry(e.target.value)
             if (!started) startTimer()
           }}
