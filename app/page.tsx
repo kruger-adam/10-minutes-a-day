@@ -5,13 +5,13 @@ export default function Home() {
     <main className="min-h-screen bg-stone-950 text-stone-100 flex flex-col items-center justify-center px-6">
       <div className="max-w-lg w-full text-center space-y-10">
         <div className="space-y-3">
-          <h1 className="text-6xl font-bold tracking-tight">10 Minutes</h1>
+          <h1 className="text-6xl font-bold tracking-tight">5 Minutes</h1>
           <p className="text-stone-400 text-xl">A daily practice for your mind</p>
         </div>
 
         <div className="space-y-4 text-stone-300 text-base leading-relaxed text-left">
           <p>
-            Every day, set aside 10 minutes to speak your thoughts freely.
+            Every day, set aside 5 minutes to speak your thoughts freely.
             No editing, no judgment — just your unfiltered stream of consciousness.
           </p>
           <p>

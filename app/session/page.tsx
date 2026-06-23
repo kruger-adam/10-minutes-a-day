@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { upsertSession } from '@/lib/storage'
 
-const DURATION = 10 * 60
+const DURATION = 5 * 60
 
 export default function SessionPage() {
   const router = useRouter()
@@ -197,7 +197,7 @@ export default function SessionPage() {
 
         {timedOut && (
           <p className="mb-5 text-amber-400 text-sm">
-            Ten minutes done. Add a final thought if you'd like, then submit.
+            Five minutes done. Add a final thought if you'd like, then submit.
           </p>
         )}
 

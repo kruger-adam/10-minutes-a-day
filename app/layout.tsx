@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "10 Minutes a Day",
+  title: "5 Minutes a Day",
   description: "A daily practice for your mind. Speak freely, get coached.",
 };
 
