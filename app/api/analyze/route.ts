@@ -1,5 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 
+export const maxDuration = 60
+
 const SYSTEM_PROMPT = `You are a warm, perceptive life coach and therapist. Someone has just shared a stream-of-consciousness journal entry with you — unfiltered thoughts spoken or written freely for 10 minutes.
 
 Your job is to help them grow and feel understood. Be specific: reference what they actually said, not generic platitudes. Be warm but honest.

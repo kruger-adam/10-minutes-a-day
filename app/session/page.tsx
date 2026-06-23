@@ -33,6 +33,13 @@ export default function SessionPage() {
     if (entry) sessionStorage.setItem('session_draft', entry)
   }, [entry])
 
+  // Auto-scroll textarea to bottom when speech adds text
+  useEffect(() => {
+    if (listening && textareaRef.current) {
+      textareaRef.current.scrollTop = textareaRef.current.scrollHeight
+    }
+  }, [entry, listening])
+
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
@@ -157,7 +164,7 @@ export default function SessionPage() {
 
   return (
     <div className="min-h-screen bg-stone-950 flex flex-col">
-      <header className="flex items-center justify-between px-6 py-4 border-b border-stone-800">
+      <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-stone-800 bg-stone-950">
         <button
           onClick={() => router.push('/')}
           className="text-stone-500 hover:text-stone-300 text-sm transition-colors"
