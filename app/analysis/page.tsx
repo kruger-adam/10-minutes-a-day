@@ -132,12 +132,20 @@ function AnalysisContent() {
               )}
             </section>
 
-            <button
-              onClick={() => router.push('/session')}
-              className="bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-6 py-3 rounded-full text-sm transition-colors"
-            >
-              Start another session
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push('/session')}
+                className="bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-6 py-3 rounded-full text-sm transition-colors"
+              >
+                Start another session
+              </button>
+              <button
+                onClick={() => router.push('/history')}
+                className="text-stone-500 hover:text-stone-400 text-sm transition-colors"
+              >
+                All sessions
+              </button>
+            </div>
           </>
         )}
       </main>

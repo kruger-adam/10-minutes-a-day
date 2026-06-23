@@ -30,6 +30,13 @@ export default function Home() {
         >
           Start today's session
         </Link>
+
+        <Link
+          href="/history"
+          className="text-stone-500 hover:text-stone-400 text-sm transition-colors"
+        >
+          View past sessions
+        </Link>
       </div>
     </main>
   )
