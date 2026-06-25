@@ -24,10 +24,19 @@ export default function SessionPage() {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const listeningRef = useRef(false)
+  const interimTextRef = useRef('')
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mainRef = useRef<HTMLDivElement>(null)
   const wakeLockRef = useRef<WakeLockSentinel | null>(null)
+
+  const commitInterim = useCallback(() => {
+    if (interimTextRef.current) {
+      setEntry(prev => prev + (prev ? ' ' : '') + interimTextRef.current)
+      interimTextRef.current = ''
+      setInterimText('')
+    }
+  }, [])
 
   useEffect(() => {
     if (entry) sessionStorage.setItem('session_draft', entry)
@@ -81,8 +90,7 @@ export default function SessionPage() {
       recognitionRef.current?.stop()
       recognitionRef.current = null
       setListening(false)
-      setEntry(prev => prev + (prev && interimText ? ' ' : '') + interimText)
-      setInterimText('')
+      commitInterim()
       wakeLockRef.current?.release()
       wakeLockRef.current = null
       return
@@ -112,21 +120,25 @@ export default function SessionPage() {
       }
       if (final.trim()) {
         setEntry(prev => prev + (prev ? ' ' : '') + final.trim())
+        interimTextRef.current = ''
         setInterimText('')
       }
       if (interim) {
+        interimTextRef.current = interim
         setInterimText(interim)
       }
     }
 
     recognition.onend = () => {
       if (listeningRef.current && recognitionRef.current) {
+        commitInterim()
         try { recognition.start() } catch {}
       }
     }
 
     recognition.onerror = (event) => {
       if (event.error !== 'aborted' && event.error !== 'no-speech') {
+        commitInterim()
         listeningRef.current = false
         recognitionRef.current = null
         setListening(false)
