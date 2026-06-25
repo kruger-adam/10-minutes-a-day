@@ -99,6 +99,13 @@ function AnalysisContent() {
     day: 'numeric',
   })
 
+  const wordCount = session.entry.trim().split(/\s+/).filter(Boolean).length
+  const minutes = Math.floor(session.duration / 60)
+  const seconds = session.duration % 60
+  const formattedDuration = minutes > 0
+    ? `${minutes}:${seconds.toString().padStart(2, '0')}`
+    : `${seconds}s`
+
   const formattedAnalysis = analysis
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/^→/gm, '<span class="text-amber-400">→</span>')
@@ -115,7 +122,10 @@ function AnalysisContent() {
         >
           Home
         </button>
-        <p className="text-stone-500 text-sm">{formattedDate}</p>
+        <div className="text-center">
+          <p className="text-stone-500 text-sm">{formattedDate}</p>
+          <p className="text-stone-600 text-xs mt-0.5">{wordCount} words · {formattedDuration}</p>
+        </div>
         <div className="w-12" />
       </header>
 
