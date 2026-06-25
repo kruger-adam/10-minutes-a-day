@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, Suspense } from 'react'
+import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { JournalSession } from '@/lib/types'
 
@@ -16,33 +16,7 @@ function AnalysisContent() {
   const [showEntry, setShowEntry] = useState(false)
   const hasStarted = useRef(false)
 
-  useEffect(() => {
-    if (!id) { router.replace('/'); return }
-    loadSession(id)
-  }, [id])
-
-  async function loadSession(sessionId: string) {
-    try {
-      const res = await fetch(`/api/sessions/${sessionId}`)
-      if (!res.ok) { router.replace('/'); return }
-      const s: JournalSession = await res.json()
-      setSession(s)
-
-      if (s.analysis) {
-        setAnalysis(s.analysis)
-        setDone(true)
-        return
-      }
-
-      if (hasStarted.current) return
-      hasStarted.current = true
-      streamAnalysis(s)
-    } catch {
-      router.replace('/')
-    }
-  }
-
-  async function streamAnalysis(s: JournalSession) {
+  const streamAnalysis = useCallback(async (s: JournalSession) => {
     try {
       const memoryRes = await fetch('/api/memory')
       const { memory } = memoryRes.ok ? await memoryRes.json() : { memory: '' }
@@ -74,7 +48,6 @@ function AnalysisContent() {
       })
       setDone(true)
 
-      // Update memory in background — don't await
       fetch('/api/memory', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,7 +56,34 @@ function AnalysisContent() {
     } catch {
       setError('Something went wrong. Please try again.')
     }
-  }
+  }, [])
+
+  const loadSession = useCallback(async (sessionId: string) => {
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`)
+      if (!res.ok) { router.replace('/'); return }
+      const s: JournalSession = await res.json()
+      setSession(s)
+
+      if (s.analysis) {
+        setAnalysis(s.analysis)
+        setDone(true)
+        return
+      }
+
+      if (hasStarted.current) return
+      hasStarted.current = true
+      streamAnalysis(s)
+    } catch {
+      router.replace('/')
+    }
+  }, [router, streamAnalysis])
+
+  useEffect(() => {
+    if (!id) { router.replace('/'); return }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadSession(id)
+  }, [id, loadSession, router])
 
   if (!session) {
     return (

@@ -39,11 +39,11 @@ interface SpeechRecognition extends EventTarget {
   abort(): void
 }
 
-declare var SpeechRecognition: {
+declare const SpeechRecognition: {
   new(): SpeechRecognition
 }
 
-declare var webkitSpeechRecognition: {
+declare const webkitSpeechRecognition: {
   new(): SpeechRecognition
 }
 

@@ -20,7 +20,7 @@ export default function Home() {
             thoughts move faster than your fingers. Just press the mic and let it flow.
           </p>
           <p>
-            When you're done, an AI coach reflects on what you shared — noticing patterns,
+            When you&apos;re done, an AI coach reflects on what you shared — noticing patterns,
             offering insight, and giving you questions to explore next time.
           </p>
         </div>
@@ -31,7 +31,7 @@ export default function Home() {
               href="/session"
               className="inline-block bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-10 py-4 rounded-full text-lg transition-colors"
             >
-              Start today's session
+              Start today&apos;s session
             </Link>
             <div className="flex items-center gap-6">
               <Link href="/history" className="text-stone-500 hover:text-stone-400 text-sm transition-colors">

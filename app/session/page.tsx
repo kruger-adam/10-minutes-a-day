@@ -10,11 +10,17 @@ export default function SessionPage() {
   const router = useRouter()
   const [timeLeft, setTimeLeft] = useState(DURATION)
   const [started, setStarted] = useState(false)
-  const [entry, setEntry] = useState('')
+  const [entry, setEntry] = useState(() =>
+    typeof window !== 'undefined' ? (sessionStorage.getItem('session_draft') ?? '') : ''
+  )
   const [interimText, setInterimText] = useState('')
   const [listening, setListening] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [speechSupported, setSpeechSupported] = useState(true)
+  const [speechSupported] = useState(() =>
+    typeof window !== 'undefined'
+      ? !!(window.SpeechRecognition || (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition)
+      : true
+  )
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const listeningRef = useRef(false)
@@ -22,13 +28,6 @@ export default function SessionPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mainRef = useRef<HTMLDivElement>(null)
   const wakeLockRef = useRef<WakeLockSentinel | null>(null)
-
-  useEffect(() => {
-    const draft = sessionStorage.getItem('session_draft')
-    if (draft) setEntry(draft)
-    const hasSpeech = !!(window.SpeechRecognition || (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition)
-    setSpeechSupported(hasSpeech)
-  }, [])
 
   useEffect(() => {
     if (entry) sessionStorage.setItem('session_draft', entry)
@@ -204,13 +203,13 @@ export default function SessionPage() {
       <main ref={mainRef} className="flex-1 overflow-y-auto px-6 pt-5 pb-2">
         {!started && (
           <p className="mb-5 text-stone-500 text-sm">
-            Use your keyboard mic or tap "Use mic" below. The timer begins when you start.
+            Use your keyboard mic or tap &quot;Use mic&quot; below. The timer begins when you start.
           </p>
         )}
 
         {timedOut && (
           <p className="mb-5 text-amber-400 text-sm">
-            Five minutes done. Add a final thought if you'd like, then submit.
+            Five minutes done. Add a final thought if you&apos;d like, then submit.
           </p>
         )}
 
