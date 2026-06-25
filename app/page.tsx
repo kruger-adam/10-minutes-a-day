@@ -42,7 +42,7 @@ export default function Home() {
           </Show>
 
           <Show when="signed-out">
-            <SignInButton mode="modal">
+            <SignInButton mode="redirect">
               <button className="inline-block bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-10 py-4 rounded-full text-lg transition-colors">
                 Sign in to get started
               </button>

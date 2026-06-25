@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import confetti from 'canvas-confetti'
 
 const DURATION = 5 * 60
 
@@ -20,6 +21,7 @@ export default function SessionPage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mainRef = useRef<HTMLDivElement>(null)
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
 
   useEffect(() => {
     const draft = sessionStorage.getItem('session_draft')
@@ -60,6 +62,7 @@ export default function SessionPage() {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current!)
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.4 } })
           return 0
         }
         return prev - 1
@@ -79,7 +82,10 @@ export default function SessionPage() {
       recognitionRef.current?.stop()
       recognitionRef.current = null
       setListening(false)
+      setEntry(prev => prev + (prev && interimText ? ' ' : '') + interimText)
       setInterimText('')
+      wakeLockRef.current?.release()
+      wakeLockRef.current = null
       return
     }
 
@@ -133,6 +139,7 @@ export default function SessionPage() {
     recognition.start()
     setListening(true)
     if (!started) startTimer()
+    navigator.wakeLock?.request('screen').then(lock => { wakeLockRef.current = lock }).catch(() => {})
   }
 
   const handleSubmit = async () => {
@@ -169,11 +176,13 @@ export default function SessionPage() {
 
   const timeFraction = timeLeft / DURATION
   const timerColor =
-    timeFraction > 0.5 ? 'text-stone-100'
+    timeLeft === 0 ? 'text-green-400'
+    : timeFraction > 0.5 ? 'text-stone-100'
     : timeFraction > 0.2 ? 'text-amber-400'
     : 'text-red-400'
 
   const timedOut = timeLeft === 0
+  const wordCount = (entry + (interimText ? ' ' + interimText : '')).trim().split(/\s+/).filter(Boolean).length
 
   return (
     <div className="h-dvh flex flex-col bg-stone-950">
@@ -222,7 +231,10 @@ export default function SessionPage() {
         />
       </main>
 
-      <footer className="flex-none px-6 py-4 border-t border-stone-800 flex items-center justify-between gap-4">
+      <footer className="flex-none px-6 py-4 border-t border-stone-800 flex items-center justify-between gap-4 relative">
+        {wordCount > 0 && (
+          <span className="text-stone-600 text-xs absolute left-1/2 -translate-x-1/2">{wordCount} words</span>
+        )}
         {speechSupported ? (
           <button
             onClick={toggleSpeech}

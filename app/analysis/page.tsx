@@ -44,10 +44,13 @@ function AnalysisContent() {
 
   async function streamAnalysis(s: JournalSession) {
     try {
+      const memoryRes = await fetch('/api/memory')
+      const { memory } = memoryRes.ok ? await memoryRes.json() : { memory: '' }
+
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entry: s.entry }),
+        body: JSON.stringify({ entry: s.entry, memory }),
       })
 
       if (!response.ok) throw new Error('Analysis failed')
@@ -70,6 +73,13 @@ function AnalysisContent() {
         body: JSON.stringify({ ...s, analysis: fullText }),
       })
       setDone(true)
+
+      // Update memory in background — don't await
+      fetch('/api/memory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entry: s.entry, analysis: fullText }),
+      })
     } catch {
       setError('Something went wrong. Please try again.')
     }

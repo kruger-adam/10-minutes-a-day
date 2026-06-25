@@ -18,6 +18,28 @@ export async function migrate() {
     CREATE INDEX IF NOT EXISTS sessions_user_id_idx
     ON sessions(user_id, created_at DESC)
   `
+  await sql`
+    CREATE TABLE IF NOT EXISTS user_memory (
+      user_id TEXT PRIMARY KEY,
+      memory TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+}
+
+export async function getUserMemory(userId: string): Promise<string> {
+  const rows = await sql`SELECT memory FROM user_memory WHERE user_id = ${userId}`
+  return rows[0]?.memory ?? ''
+}
+
+export async function setUserMemory(userId: string, memory: string): Promise<void> {
+  await sql`
+    INSERT INTO user_memory (user_id, memory, updated_at)
+    VALUES (${userId}, ${memory}, NOW())
+    ON CONFLICT (user_id) DO UPDATE SET
+      memory = EXCLUDED.memory,
+      updated_at = NOW()
+  `
 }
 
 export async function getUserSessions(userId: string): Promise<JournalSession[]> {
