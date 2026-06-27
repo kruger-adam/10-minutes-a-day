@@ -42,6 +42,40 @@ export async function setUserMemory(userId: string, memory: string): Promise<voi
   `
 }
 
+export async function computeStreak(userId: string): Promise<number> {
+  const rows = await sql`
+    SELECT DISTINCT DATE(created_at AT TIME ZONE 'UTC') AS day
+    FROM sessions
+    WHERE user_id = ${userId}
+    ORDER BY day DESC
+  `
+  if (rows.length === 0) return 0
+
+  const today = new Date().toISOString().slice(0, 10)
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+
+  const days = rows.map((r) => {
+    const d = r.day as string | Date
+    return typeof d === 'string' ? d : d.toISOString().slice(0, 10)
+  })
+
+  // Streak must include today or yesterday to be active
+  if (days[0] !== today && days[0] !== yesterday) return 0
+
+  let streak = 1
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1])
+    const curr = new Date(days[i])
+    const diffDays = Math.round((prev.getTime() - curr.getTime()) / 86400000)
+    if (diffDays === 1) {
+      streak++
+    } else {
+      break
+    }
+  }
+  return streak
+}
+
 export async function getUserSessions(userId: string): Promise<JournalSession[]> {
   const rows = await sql`
     SELECT id, created_at, entry, analysis, duration
