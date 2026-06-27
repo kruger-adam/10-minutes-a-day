@@ -120,6 +120,7 @@ export default function SessionPage() {
         }
       }
       if (final.trim()) {
+        console.log('[speech] final:', final.trim().slice(0, 60))
         setEntry(prev => prev + (prev ? ' ' : '') + final.trim())
         interimTextRef.current = ''
         setInterimText('')
@@ -131,13 +132,17 @@ export default function SessionPage() {
     }
 
     recognition.onend = () => {
+      console.log('[speech] onend — listeningRef:', listeningRef.current, 'interim:', interimTextRef.current.slice(0, 60))
       if (listeningRef.current && recognitionRef.current) {
         commitInterim()
-        try { recognition.start() } catch {}
+        try { recognition.start(); console.log('[speech] restarted') } catch (e) { console.error('[speech] restart failed:', e) }
+      } else {
+        console.log('[speech] onend: not restarting (listening stopped)')
       }
     }
 
     recognition.onerror = (event) => {
+      console.log('[speech] onerror:', event.error, 'interim:', interimTextRef.current.slice(0, 60))
       if (event.error !== 'aborted' && event.error !== 'no-speech') {
         commitInterim()
         listeningRef.current = false
