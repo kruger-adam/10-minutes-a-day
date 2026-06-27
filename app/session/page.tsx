@@ -31,10 +31,11 @@ export default function SessionPage() {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null)
 
   const commitInterim = useCallback(() => {
-    if (interimTextRef.current) {
-      setEntry(prev => prev + (prev ? ' ' : '') + interimTextRef.current)
+    const text = interimTextRef.current
+    if (text) {
       interimTextRef.current = ''
       setInterimText('')
+      setEntry(prev => prev + (prev ? ' ' : '') + text)
     }
   }, [])
 
@@ -154,8 +155,11 @@ export default function SessionPage() {
   }
 
   const handleSubmit = async () => {
-    if (!entry.trim() || submitting) return
+    const pendingInterim = interimTextRef.current
+    const fullEntry = (entry + (pendingInterim ? (entry.trim() ? ' ' : '') + pendingInterim : '')).trim()
+    if (!fullEntry || submitting) return
 
+    interimTextRef.current = ''
     listeningRef.current = false
     if (recognitionRef.current) {
       recognitionRef.current.stop()
@@ -170,7 +174,7 @@ export default function SessionPage() {
     const session = {
       id,
       createdAt: new Date().toISOString(),
-      entry: entry.trim(),
+      entry: fullEntry,
       analysis: '',
       duration: elapsed,
     }
