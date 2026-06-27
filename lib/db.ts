@@ -44,7 +44,7 @@ export async function setUserMemory(userId: string, memory: string): Promise<voi
 
 export async function computeStreak(userId: string): Promise<number> {
   const rows = await sql`
-    SELECT DISTINCT DATE(created_at AT TIME ZONE 'UTC') AS day
+    SELECT DISTINCT TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day
     FROM sessions
     WHERE user_id = ${userId}
     ORDER BY day DESC
@@ -54,10 +54,7 @@ export async function computeStreak(userId: string): Promise<number> {
   const today = new Date().toISOString().slice(0, 10)
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
 
-  const days = rows.map((r) => {
-    const d = r.day as string | Date
-    return typeof d === 'string' ? d : d.toISOString().slice(0, 10)
-  })
+  const days = rows.map((r) => r.day as string)
 
   // Streak must include today or yesterday to be active
   if (days[0] !== today && days[0] !== yesterday) return 0

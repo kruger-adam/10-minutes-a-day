@@ -6,6 +6,10 @@ export async function GET() {
   if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   await migrate()
-  const streak = await computeStreak(userId)
-  return Response.json({ streak })
+  try {
+    const streak = await computeStreak(userId)
+    return Response.json({ streak })
+  } catch (e) {
+    return Response.json({ error: String(e), streak: 0 }, { status: 500 })
+  }
 }
