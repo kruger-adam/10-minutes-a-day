@@ -143,12 +143,17 @@ export default function SessionPage() {
 
     recognition.onerror = (event) => {
       console.log('[speech] onerror:', event.error, 'interim:', interimTextRef.current.slice(0, 60))
-      if (event.error !== 'aborted' && event.error !== 'no-speech') {
+      if (event.error === 'aborted' || event.error === 'no-speech') return
+      // Network errors are transient (Chrome times out its speech server connection after ~5 min).
+      // Commit interim and let onend restart recognition rather than treating it as fatal.
+      if (event.error === 'network') {
         commitInterim()
-        listeningRef.current = false
-        recognitionRef.current = null
-        setListening(false)
+        return
       }
+      commitInterim()
+      listeningRef.current = false
+      recognitionRef.current = null
+      setListening(false)
     }
 
     recognitionRef.current = recognition
