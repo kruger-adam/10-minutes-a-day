@@ -44,7 +44,7 @@ export default function StreakBadge() {
   return (
     <div className="flex items-center gap-2 text-amber-500 font-semibold text-sm">
       <span className="text-lg">🔥</span>
-      <span>{streak} {streak === 1 ? 'day' : 'days'} streak</span>
+      <span>{streak} day streak</span>
     </div>
   )
 }

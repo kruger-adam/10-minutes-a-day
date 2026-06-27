@@ -4,6 +4,15 @@ import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { JournalSession } from '@/lib/types'
 
+function formatAnalysis(text: string): string {
+  return '<p>' + text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^→/gm, '<span class="text-amber-400">→</span>')
+    .trim()
+    .replace(/\n\n+/g, '</p><p style="margin-top:1rem">')
+    .replace(/\n/g, '<br/>') + '</p>'
+}
+
 function AnalysisContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -11,10 +20,35 @@ function AnalysisContent() {
 
   const [session, setSession] = useState<JournalSession | null>(null)
   const [analysis, setAnalysis] = useState('')
+  const [displayed, setDisplayed] = useState('')
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
-  const [showEntry, setShowEntry] = useState(false)
   const hasStarted = useRef(false)
+  const analysisBufferRef = useRef('')
+  const typewriterActiveRef = useRef(false)
+  const rafRef = useRef<number | null>(null)
+
+  const startTypewriter = useCallback(() => {
+    if (typewriterActiveRef.current) return
+    typewriterActiveRef.current = true
+
+    const tick = () => {
+      setDisplayed(prev => {
+        const target = analysisBufferRef.current
+        if (prev.length >= target.length) {
+          typewriterActiveRef.current = false
+          return prev
+        }
+        rafRef.current = requestAnimationFrame(tick)
+        return target.slice(0, prev.length + 4)
+      })
+    }
+    rafRef.current = requestAnimationFrame(tick)
+  }, [])
+
+  useEffect(() => {
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [])
 
   const streamAnalysis = useCallback(async (s: JournalSession) => {
     try {
@@ -38,7 +72,9 @@ function AnalysisContent() {
         const { done: readerDone, value } = await reader.read()
         if (readerDone) break
         fullText += decoder.decode(value, { stream: true })
+        analysisBufferRef.current = fullText
         setAnalysis(fullText)
+        startTypewriter()
       }
 
       await fetch('/api/sessions', {
@@ -56,7 +92,7 @@ function AnalysisContent() {
     } catch {
       setError('Something went wrong. Please try again.')
     }
-  }, [])
+  }, [startTypewriter])
 
   const loadSession = useCallback(async (sessionId: string) => {
     try {
@@ -67,6 +103,7 @@ function AnalysisContent() {
 
       if (s.analysis) {
         setAnalysis(s.analysis)
+        setDisplayed(s.analysis)
         setDone(true)
         return
       }
@@ -106,12 +143,7 @@ function AnalysisContent() {
     ? `${minutes}:${seconds.toString().padStart(2, '0')}`
     : `${seconds}s`
 
-  const formattedAnalysis = analysis
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^→/gm, '<span class="text-amber-400">→</span>')
-    .split('\n')
-    .map(line => line || '<br/>')
-    .join('\n')
+  const isTyping = displayed.length < analysis.length || !done
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100">
@@ -131,15 +163,19 @@ function AnalysisContent() {
 
       <main className="max-w-2xl mx-auto px-6 py-10 space-y-10">
         <section>
-          <p className="text-xs uppercase tracking-widest text-amber-500 mb-6">Your reflection</p>
+          <p className="text-xs uppercase tracking-widest text-stone-600 mb-4">Your entry</p>
+          <p className="text-stone-400 text-sm leading-relaxed whitespace-pre-wrap">
+            {session.entry}
+          </p>
+        </section>
 
-          {analysis ? (
-            <div className="text-stone-200 leading-relaxed text-base space-y-4">
-              <div
-                className="whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{ __html: formattedAnalysis }}
-              />
-              {!done && <span className="inline-block w-0.5 h-4 bg-amber-500 animate-pulse" />}
+        <section>
+          <p className="text-xs uppercase tracking-widest text-amber-500 mb-6">Reflection</p>
+
+          {displayed ? (
+            <div className="text-stone-200 leading-relaxed text-base">
+              <div dangerouslySetInnerHTML={{ __html: formatAnalysis(displayed) }} />
+              {isTyping && <span className="inline-block w-0.5 h-4 bg-amber-500 animate-pulse ml-0.5" />}
             </div>
           ) : (
             <div className="flex items-center gap-3 text-stone-500">
@@ -151,38 +187,21 @@ function AnalysisContent() {
           {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
         </section>
 
-        {done && (
-          <>
-            <section>
-              <button
-                onClick={() => setShowEntry(v => !v)}
-                className="text-xs uppercase tracking-widest text-stone-600 hover:text-stone-400 transition-colors flex items-center gap-2"
-              >
-                <span className={`transition-transform ${showEntry ? 'rotate-90' : ''}`}>▶</span>
-                Your entry
-              </button>
-              {showEntry && (
-                <p className="mt-4 text-stone-500 text-sm leading-relaxed whitespace-pre-wrap">
-                  {session.entry}
-                </p>
-              )}
-            </section>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/session')}
-                className="bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-6 py-3 rounded-full text-sm transition-colors"
-              >
-                Start another session
-              </button>
-              <button
-                onClick={() => router.push('/history')}
-                className="text-stone-500 hover:text-stone-400 text-sm transition-colors"
-              >
-                All sessions
-              </button>
-            </div>
-          </>
+        {done && !isTyping && (
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push('/session')}
+              className="bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-6 py-3 rounded-full text-sm transition-colors"
+            >
+              Start another session
+            </button>
+            <button
+              onClick={() => router.push('/history')}
+              className="text-stone-500 hover:text-stone-400 text-sm transition-colors"
+            >
+              All sessions
+            </button>
+          </div>
         )}
       </main>
     </div>
