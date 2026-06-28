@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Show, SignInButton, UserButton } from '@clerk/nextjs'
-import StreakBadge from './components/StreakBadge'
+import HomeStatus from './components/HomeStatus'
 
 export default function Home() {
   return (
@@ -28,13 +28,7 @@ export default function Home() {
 
         <div className="flex flex-col items-center gap-4">
           <Show when="signed-in">
-            <StreakBadge />
-            <Link
-              href="/session"
-              className="inline-block bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold px-10 py-4 rounded-full text-lg transition-colors"
-            >
-              Start today&apos;s session
-            </Link>
+            <HomeStatus />
             <div className="flex items-center gap-6">
               <Link href="/history" className="text-stone-500 hover:text-stone-400 text-sm transition-colors">
                 View past sessions

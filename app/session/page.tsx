@@ -257,7 +257,7 @@ export default function SessionPage() {
       </main>
 
       <footer className="flex-none px-6 py-4 border-t border-stone-800 flex items-center justify-between gap-4 relative">
-        {wordCount > 0 && (
+        {wordCount > 0 && !timedOut && (
           <span className="text-stone-600 text-xs absolute left-1/2 -translate-x-1/2">{wordCount} words</span>
         )}
         {speechSupported ? (
