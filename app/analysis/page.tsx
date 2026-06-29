@@ -4,6 +4,17 @@ import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { JournalSession } from '@/lib/types'
 
+function stripScore(raw: string): { display: string; score?: number } {
+  if (!raw.startsWith('SCORE:')) return { display: raw }
+  const nlIdx = raw.indexOf('\n')
+  if (nlIdx === -1) return { display: '' } // score line not yet complete
+  const score = parseInt(raw.slice(6, nlIdx))
+  return {
+    display: raw.slice(nlIdx + 1),
+    score: isNaN(score) ? undefined : Math.max(-2, Math.min(2, score)),
+  }
+}
+
 function formatAnalysis(text: string): string {
   return '<p>' + text
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -73,22 +84,25 @@ function AnalysisContent() {
         const { done: readerDone, value } = await reader.read()
         if (readerDone) break
         fullText += decoder.decode(value, { stream: true })
-        analysisBufferRef.current = fullText
+        const { display } = stripScore(fullText)
+        analysisBufferRef.current = display
         setAnalysis(fullText)
         startTypewriter()
       }
 
+      const { display: cleanAnalysis, score: moodScore } = stripScore(fullText)
+
       await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...s, analysis: fullText }),
+        body: JSON.stringify({ ...s, analysis: cleanAnalysis, moodScore }),
       })
       setDone(true)
 
       fetch('/api/memory', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entry: s.entry, analysis: fullText }),
+        body: JSON.stringify({ entry: s.entry, analysis: cleanAnalysis }),
       })
     } catch {
       setError('Something went wrong. Please try again.')

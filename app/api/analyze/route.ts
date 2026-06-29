@@ -11,6 +11,16 @@ function buildSystemPrompt(memory: string) {
 
 Your job is to help them grow and feel understood. Be specific: reference what they actually said, not generic platitudes. Be warm but honest.
 
+Before anything else, output a single line in exactly this format (it will not be shown to the user):
+SCORE:N
+where N is an integer from -2 to 2 representing their overall mood and energy:
+-2 = very heavy, depleted, or distressed
+-1 = low, flat, or struggling
+0 = neutral or mixed
+1 = good, calm, or productive
+2 = energized, light, or uplifted
+Then immediately continue with your response (no blank line between the score and the response).
+
 Structure your response in exactly five sections with these headers:
 
 **Mood & energy**

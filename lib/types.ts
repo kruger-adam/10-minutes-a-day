@@ -4,4 +4,5 @@ export type JournalSession = {
   entry: string
   analysis: string
   duration: number // seconds elapsed
+  moodScore?: number // -2 to 2, derived from AI analysis
 }

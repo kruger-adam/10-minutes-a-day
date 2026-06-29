@@ -9,6 +9,71 @@ function toLocalDateKey(iso: string) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 }
 
+function smoothPath(pts: { x: number; y: number }[]): string {
+  if (pts.length === 0) return ''
+  return pts.map((p, i) => {
+    if (i === 0) return `M ${p.x} ${p.y}`
+    const prev = pts[i - 1]
+    const cpX = (prev.x + p.x) / 2
+    return `C ${cpX} ${prev.y} ${cpX} ${p.y} ${p.x} ${p.y}`
+  }).join(' ')
+}
+
+function InnerWeather({ sessions, onSessionClick }: { sessions: JournalSession[], onSessionClick: (id: string) => void }) {
+  const scored = [...sessions]
+    .filter(s => s.moodScore != null)
+    .slice(0, 20)
+    .reverse()
+
+  if (scored.length < 2) return null
+
+  const VW = 500
+  const VH = 110
+  const padX = 20
+  const padY = 12
+  const graphW = VW - padX * 2
+  const graphH = 72
+
+  const scoreToY = (score: number) => padY + (2 - score) / 4 * graphH
+  const idxToX = (i: number) => padX + (scored.length === 1 ? graphW / 2 : (i / (scored.length - 1)) * graphW)
+
+  const pts = scored.map((s, i) => ({ x: idxToX(i), y: scoreToY(s.moodScore!), id: s.id, createdAt: s.createdAt }))
+  const linePath = smoothPath(pts)
+  const areaPath = linePath + ` L ${pts[pts.length - 1].x} ${padY + graphH} L ${pts[0].x} ${padY + graphH} Z`
+  const neutral = scoreToY(0)
+
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+  return (
+    <div className="bg-stone-900 rounded-xl p-5 mb-8">
+      <p className="text-xs uppercase tracking-widest text-stone-600 mb-3">Inner weather</p>
+      <div className="flex gap-3 items-stretch">
+        <div className="flex flex-col justify-between text-stone-700 text-xs select-none pb-5">
+          <span>light</span>
+          <span>heavy</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full" style={{ height: 90 }}>
+            <line x1={padX} y1={neutral} x2={VW - padX} y2={neutral} stroke="#44403c" strokeWidth="1" strokeDasharray="4 3" />
+            <path d={areaPath} fill="#f59e0b" fillOpacity="0.07" />
+            <path d={linePath} fill="none" stroke="#f59e0b" strokeWidth="2" strokeOpacity="0.5" strokeLinecap="round" />
+            {pts.map((p, i) => (
+              <g key={i} onClick={() => onSessionClick(p.id)} style={{ cursor: 'pointer' }}>
+                <circle cx={p.x} cy={p.y} r="10" fill="transparent" />
+                <circle cx={p.x} cy={p.y} r="3.5" fill="#f59e0b" />
+              </g>
+            ))}
+          </svg>
+          <div className="flex justify-between text-stone-700 text-xs mt-1">
+            <span>{fmtDate(scored[0].createdAt)}</span>
+            <span>{fmtDate(scored[scored.length - 1].createdAt)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Calendar({ sessions, onDayClick }: { sessions: JournalSession[], onDayClick: (key: string) => void }) {
   const [viewDate, setViewDate] = useState(new Date())
 
@@ -176,6 +241,7 @@ export default function HistoryPage() {
           </div>
         ) : (
           <>
+            <InnerWeather sessions={sessions} onSessionClick={id => router.push(`/analysis?id=${id}`)} />
             <Calendar sessions={sessions} onDayClick={handleDayClick} />
             <ul className="space-y-3">
               {sessions.map(session => (

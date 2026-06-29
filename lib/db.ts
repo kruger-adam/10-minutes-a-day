@@ -25,6 +25,9 @@ export async function migrate() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `
+  await sql`
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mood_score INTEGER
+  `
 }
 
 export async function getUserMemory(userId: string): Promise<string> {
@@ -56,7 +59,6 @@ export async function computeStreak(userId: string): Promise<number> {
 
   const days = rows.map((r) => r.day as string)
 
-  // Streak must include today or yesterday to be active
   if (days[0] !== today && days[0] !== yesterday) return 0
 
   let streak = 1
@@ -75,7 +77,7 @@ export async function computeStreak(userId: string): Promise<number> {
 
 export async function getUserSessions(userId: string): Promise<JournalSession[]> {
   const rows = await sql`
-    SELECT id, created_at, entry, analysis, duration
+    SELECT id, created_at, entry, analysis, duration, mood_score
     FROM sessions
     WHERE user_id = ${userId}
     ORDER BY created_at DESC
@@ -86,12 +88,13 @@ export async function getUserSessions(userId: string): Promise<JournalSession[]>
     entry: r.entry,
     analysis: r.analysis,
     duration: r.duration,
+    moodScore: r.mood_score ?? undefined,
   }))
 }
 
 export async function getSessionById(id: string, userId: string): Promise<JournalSession | null> {
   const rows = await sql`
-    SELECT id, created_at, entry, analysis, duration
+    SELECT id, created_at, entry, analysis, duration, mood_score
     FROM sessions
     WHERE id = ${id} AND user_id = ${userId}
   `
@@ -103,6 +106,7 @@ export async function getSessionById(id: string, userId: string): Promise<Journa
     entry: r.entry,
     analysis: r.analysis,
     duration: r.duration,
+    moodScore: r.mood_score ?? undefined,
   }
 }
 
@@ -111,10 +115,11 @@ export async function upsertSession(
   session: JournalSession
 ): Promise<void> {
   await sql`
-    INSERT INTO sessions (id, user_id, created_at, entry, analysis, duration)
-    VALUES (${session.id}, ${userId}, ${session.createdAt}, ${session.entry}, ${session.analysis}, ${session.duration})
+    INSERT INTO sessions (id, user_id, created_at, entry, analysis, duration, mood_score)
+    VALUES (${session.id}, ${userId}, ${session.createdAt}, ${session.entry}, ${session.analysis}, ${session.duration}, ${session.moodScore ?? null})
     ON CONFLICT (id) DO UPDATE SET
       analysis = EXCLUDED.analysis,
-      duration = EXCLUDED.duration
+      duration = EXCLUDED.duration,
+      mood_score = EXCLUDED.mood_score
   `
 }
