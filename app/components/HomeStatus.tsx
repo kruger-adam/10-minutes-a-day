@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Flame from './Flame'
 
 interface Session {
   id: string
@@ -53,7 +54,7 @@ export default function HomeStatus() {
     <>
       {streak ? (
         <div className="flex items-center gap-2 text-amber-500 font-semibold text-sm">
-          <span className="text-lg">🔥</span>
+          <Flame size={24} />
           <span>{streak} day streak</span>
         </div>
       ) : null}
