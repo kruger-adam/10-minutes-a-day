@@ -14,7 +14,7 @@ export default function Flame({ size = 28 }: { size?: number }) {
         fill="url(#flameOuter)"
         style={{
           transformOrigin: 'center bottom',
-          animation: 'flame-outer 1.8s ease-in-out infinite',
+          animation: 'flame-outer 1.1s ease-in-out infinite',
         }}
       />
       {/* mid flame */}
@@ -23,7 +23,7 @@ export default function Flame({ size = 28 }: { size?: number }) {
         fill="url(#flameMid)"
         style={{
           transformOrigin: 'center bottom',
-          animation: 'flame-mid 1.3s ease-in-out infinite',
+          animation: 'flame-mid 0.8s ease-in-out infinite',
         }}
       />
       {/* bright core */}
@@ -32,7 +32,7 @@ export default function Flame({ size = 28 }: { size?: number }) {
         fill="url(#flameCore)"
         style={{
           transformOrigin: 'center bottom',
-          animation: 'flame-core 0.9s ease-in-out infinite',
+          animation: 'flame-core 0.6s ease-in-out infinite',
         }}
       />
       <defs>
