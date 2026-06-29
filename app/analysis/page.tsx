@@ -23,6 +23,7 @@ function AnalysisContent() {
   const [displayed, setDisplayed] = useState('')
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
+  const [showFullEntry, setShowFullEntry] = useState(false)
   const hasStarted = useRef(false)
   const analysisBufferRef = useRef('')
   const typewriterActiveRef = useRef(false)
@@ -164,9 +165,15 @@ function AnalysisContent() {
       <main className="max-w-2xl mx-auto px-6 py-10 space-y-10">
         <section>
           <p className="text-xs uppercase tracking-widest text-stone-600 mb-4">Your entry</p>
-          <p className="text-stone-400 text-sm leading-relaxed whitespace-pre-wrap">
+          <p className={`text-stone-400 text-sm leading-relaxed whitespace-pre-wrap ${showFullEntry ? '' : 'line-clamp-3'}`}>
             {session.entry}
           </p>
+          <button
+            onClick={() => setShowFullEntry(v => !v)}
+            className="text-stone-600 hover:text-stone-400 text-xs mt-2 transition-colors"
+          >
+            {showFullEntry ? 'Show less' : 'Show full entry'}
+          </button>
         </section>
 
         <section>
